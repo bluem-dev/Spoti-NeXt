@@ -1,106 +1,47 @@
-# SpotiFLAC
+# Spoti NeXt
 
-<a href="https://trendshift.io/repositories/15737" target="_blank"><img src="https://trendshift.io/api/badge/repositories/15737" alt="afkarxyz%2FSpotiFLAC | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+"Spoti NeXt" está basada en la versión original creada por afkarxyz.
 
-Get Spotify tracks in true FLAC from Tidal, Qobuz & Amazon Music — no account required.
+![Image](...)
 
-![Windows](https://img.shields.io/badge/Windows-10%2B-0078D6?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiB2aWV3Qm94PSIwIDAgMjAgMjAiPjxwYXRoIGZpbGw9IiNmZmZmZmYiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTIwIDEwLjg3M1YyMEw4LjQ3OSAxOC41MzdsLjAwMS03LjY2NEgyMFptLTEzLjEyIDBsLS4wMDEgNy40NjFMMCAxNy40NjF2LTYuNTg4aDYuODhaTTIwIDkuMjczSDguNDhsLS4wMDEtNy44MUwyMCAwdjkuMjczWk02Ljg3OSAxLjY2NmwuMDAxIDcuNjA3SDBWMi41MzlsNi44NzktLjg3M1oiLz48L3N2Zz4=)
-![macOS](https://img.shields.io/badge/macOS-10.13%2B-000000?style=for-the-badge&logo=apple&logoColor=white)
-![Linux](https://img.shields.io/badge/Linux-Any-FCC624?style=for-the-badge&logo=linux&logoColor=white)
-[![Announcements](https://img.shields.io/badge/ANNOUNCEMENTS-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/spotiflac)
-[![Chat](https://img.shields.io/badge/CHAT-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/spotiflac_chat)
+## CARACTERÍSTICAS DE NeXt
 
-### [Download](https://github.com/afkarxyz/SpotiFLAC/releases)
+- Soporte de idioma: en, es.
+- Opción: fuente de descarga única (directa).
+- Opción: metadata personalizada.
+- Opción: descargas simultáneas.
+- Opción de formatos: FLAC, M4A, WAV y MP3. + Selecc. automática.
+- Extensión de resolución de enlaces y búsqueda.
+- Adición de metadata: fuente de audio obtenido.
+- ...
 
-![Image](https://github.com/user-attachments/assets/c2624ca5-8569-49f0-950e-4410b523cea1)
+# HISTORIAL DE CAMBIOS
 
-## Other projects
+Información sobre los cambios de corrección 
+y adiciones en la aplicación.
 
-### [SpotiFLAC Next](https://github.com/afkarxyz/SpotiFLAC-Next)
+### NUEVO
+- Características de idioma, estabilización de código y descargas.
 
-Get Spotify tracks in true Lossless from Tidal, Qobuz, Amazon Music, Deezer & Apple Music — no account required.
+### PENDIENTES
+- ...
 
-### [SpotiDownloader](https://github.com/afkarxyz/SpotiDownloader)
+### CORREGIDO
 
-Get Spotify tracks, albums, playlists and discography in MP3 and FLAC.
+- Resolución de URLs por región y variantes: 
+errores al ser enlaces con ubicaciones/idioma explícitos. 
+Ahora se resuelven automáticamente sin importar 
+la región/idioma.
+- Correcciones en ISRC/TTL: caché, tiempo, duplicado.
+- Loggin plano: ahora usa log.Print de stdlib.
+- ...
 
-### [SpotubeDL](https://spotubedl.com)
-
-Download Spotify Tracks, Albums, Playlists as MP3/OGG/Opus with High Quality.
-
-### [SpotiFLAC (Mobile)](https://github.com/zarzet/SpotiFLAC-Mobile)
-
-SpotiFLAC for Android & iOS — maintained by [@zarzet](https://github.com/zarzet)
-
-### [SpotiFLAC (CLI)](https://github.com/Nizarberyan/SpotiFLAC)
-
-SpotiFLAC for command-line environments — maintained by [@Nizarberyan](https://github.com/Nizarberyan)
-
-### [SpotiFLAC (Python Module)](https://github.com/ShuShuzinhuu/SpotiFLAC-Module-Version)
-
-SpotiFLAC Python library for SpotiFLAC integration — maintained by [@ShuShuzinhuu](https://github.com/ShuShuzinhuu)
-
-## FAQ
-
-<details>
-<summary>Is this software free?</summary>
-
-_Yes. This software is completely free.
-You do not need an account, login, or subscription.
-All you need is an internet connection._
-
-</details>
-
-<details>
-<summary>Can using this software get my Spotify account suspended or banned?</summary>
-
-_No.
-This software has no connection to your Spotify account.
-Spotify data is obtained through reverse engineering of the Spotify Web Player, not through user authentication._
-
-</details>
-
-<details>
-<summary>Where does the audio come from?</summary>
-
-_The audio is fetched using third-party APIs._
-
-</details>
-
-<details>
-<summary>Why does metadata fetching sometimes fail?</summary>
-
-_This usually happens because your IP address has been rate-limited.
-You can wait and try again later, or use a VPN to bypass the rate limit._
-
-</details>
-
-<details>
-<summary>Why does Windows Defender or antivirus flag or delete the file?</summary>
-
-_This is a false positive.
-It likely happens because the executable is compressed using UPX._
-
-_If you are concerned, you can fork the repository and build the software yourself from source._
-
-</details>
-
-<details>
-<summary>Want to support the project?</summary>
-
-_If this software is useful and brings you value,
-consider supporting the project by buying me a coffee.
-Your support helps keep development going._
-
-</details>
-
-[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/afkarxyz)
-
-## Disclaimer
+## DECLARACIÓN
 
 This project is for **educational and private use only**. The developer does not condone or encourage copyright infringement.
 
-**SpotiFLAC** is a third-party tool and is not affiliated with, endorsed by, or connected to Spotify, Tidal, Qobuz, Amazon Music or any other streaming service.
+**SpotiFLAC** and **Spoti NeXt** is a third-party tool and is not affiliated with, endorsed by, or connected to Spotify, Tidal, Qobuz, Amazon Music or any other streaming 
+service.
 
 You are solely responsible for:
 
@@ -110,12 +51,7 @@ You are solely responsible for:
 
 The software is provided "as is", without warranty of any kind. The author assumes no liability for any bans, damages, or legal issues arising from its use.
 
-## API Credits
+## CRÉDITOS DE APIs & APLICACIÓN
 
-[MusicBrainz](https://musicbrainz.org) · [LRCLIB](https://lrclib.net) · [Songlink/Odesli](https://song.link) · [hifi-api](https://github.com/binimum/hifi-api) · [dabmusic.xyz](https://dabmusic.xyz)
+[MusicBrainz](https://musicbrainz.org) · [LRCLIB](https://lrclib.net) · [Songlink/Odesli](https://song.link) · [hifi-api](https://github.com/binimum/hifi-api) · [dabmusic.xyz](https://dabmusic.xyz) · [SpotiFLAC](https://github.com/afkarxyz/SpotiFLAC)
 
-> [!TIP]
->
-> **Star Us**, You will receive all release notifications from GitHub without any delay ~
-
-[![RepoStars](https://repostars.dev/api/embed?repo=afkarxyz%2FSpotiFLAC&theme=forest)](https://repostars.dev/?repos=afkarxyz%2FSpotiFLAC&theme=forest)
