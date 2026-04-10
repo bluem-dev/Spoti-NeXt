@@ -2,7 +2,7 @@
 
 "Spoti NeXt" está basada en la versión original creada por afkarxyz.
 
-![Image](...)
+![Image](https://res.cloudinary.com/djljnirz2/image/upload/v1775848877/Spoti_NeXt_00_pq0zov.png)
 
 ## CARACTERÍSTICAS DE NeXt
 
@@ -11,6 +11,8 @@
 - Opción: metadata personalizada.
 - Opción: descargas simultáneas.
 - Opción de formatos: FLAC, M4A, WAV y MP3. + Selecc. automática.
+- Opción: calidades.
+- Opción: atmos (Tidal)
 - Extensión de resolución de enlaces y búsqueda.
 - Adición de metadata: fuente de audio obtenido.
 - ...
