@@ -32,8 +32,10 @@ y adiciones en la aplicación.
 errores al ser enlaces con ubicaciones/idioma explícitos. 
 Ahora se resuelven automáticamente sin importar 
 la región/idioma.
+- Conflicto "SpotiFetch API" & "Fetch Data".
 - Correcciones en ISRC/TTL: caché, tiempo, duplicado.
 - Loggin plano: ahora usa log.Print de stdlib.
+- Deezer expuesto cómo fuente.
 - ...
 
 ## DECLARACIÓN
