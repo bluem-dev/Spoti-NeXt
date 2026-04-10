@@ -2,7 +2,7 @@
 
 "Spoti NeXt" está basada en la versión original creada por afkarxyz.
 
-![Image](https://res.cloudinary.com/djljnirz2/image/upload/v1775848877/Spoti_NeXt_00_pq0zov.png)
+![Image](https://res.cloudinary.com/djljnirz2/image/upload/v1775849583/copy_of_spoti_next_00_500x_13c728.png)
 
 ## CARACTERÍSTICAS DE NeXt
 
