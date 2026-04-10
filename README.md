@@ -2,19 +2,20 @@
 
 "Spoti NeXt" está basada en la versión original creada por afkarxyz.
 
-![Image](https://res.cloudinary.com/djljnirz2/image/upload/v1775849583/copy_of_spoti_next_00_500x_13c728.png)
+![Image](https://res.cloudinary.com/djljnirz2/image/upload/v1775858383/1111_yl9tj3.jpg)
+
+***
 
 ## CARACTERÍSTICAS DE NeXt
 
-- Soporte de idioma: en, es.
+- Soporte de idioma: en, es. | EN DESARROLLO...
+- Descarga: Atmos (Tidal) | PENDIENTE, EN DESARROLLO.
 - Opción: fuente de descarga única (directa).
-- Opción: metadata personalizada.
-- Opción: descargas simultáneas.
-- Opción de formatos: FLAC, M4A, WAV y MP3. + Selecc. automática.
-- Opción: calidades.
-- Opción: atmos (Tidal)
-- Extensión de resolución de enlaces y búsqueda.
-- Adición de metadata: fuente de audio obtenido.
+- Opción: metadata personalizada. | PENDIENTE.
+- Opción: descargas simultáneas. | PENDIENTE.
+- Opción de formatos: FLAC, M4A, WAV y MP3. + selecc. automática. | PENDIENTE.
+- Extensión de resolución de enlaces y búsqueda. | IMPLEMENTADO, AÚN EN DESARROLLO.
+- Adición de metadata: fuente de audio obtenido. 
 - ...
 
 # HISTORIAL DE CAMBIOS
@@ -37,7 +38,6 @@ la región/idioma.
 - Conflicto "SpotiFetch API" & "Fetch Data".
 - Correcciones en ISRC/TTL: caché, tiempo, duplicado.
 - Loggin plano: ahora usa log.Print de stdlib.
-- Deezer expuesto cómo fuente.
 - ...
 
 ## DECLARACIÓN
@@ -46,14 +46,6 @@ This project is for **educational and private use only**. The developer does not
 
 **SpotiFLAC** and **Spoti NeXt** is a third-party tool and is not affiliated with, endorsed by, or connected to Spotify, Tidal, Qobuz, Amazon Music or any other streaming 
 service.
-
-You are solely responsible for:
-
-1. Ensuring your use of this software complies with your local laws.
-2. Reading and adhering to the Terms of Service of the respective platforms.
-3. Any legal consequences resulting from the misuse of this tool.
-
-The software is provided "as is", without warranty of any kind. The author assumes no liability for any bans, damages, or legal issues arising from its use.
 
 ## CRÉDITOS DE APIs & APLICACIÓN
 
