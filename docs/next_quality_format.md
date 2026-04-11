@@ -1,10 +1,8 @@
-# Calidad y Fuentes de Descarga — Documentación técnica
+# Calidad y fuente de descarga
 
 ## Estado
-
-Implementado. Funcional.
-
----
+> Implementado. Funcional.
+___
 
 ## Fuentes disponibles
 
