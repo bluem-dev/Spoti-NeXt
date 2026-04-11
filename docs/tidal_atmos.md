@@ -1,12 +1,11 @@
 # Dolby Atmos
 
 ## Estado
+> Implementado. Funcional bajo las condiciones descritas abajo.
 
-Implementado. Funcional bajo las condiciones descritas abajo.
+#
 
----
-
-## Cómo funciona
+## ¿Cómo funciona?
 
 Cuando el usuario activa el toggle Atmos y tiene una cuenta Tidal vinculada, Spoti NeXt:
 
@@ -38,7 +37,7 @@ No todos los tracks tienen versión Atmos. Atmos es un mix separado — no una c
 
 ---
 
-## Investigación realizada (sesiones 13–21)
+## Investigación realizada
 
 Durante el desarrollo se investigaron y descartaron las siguientes variables:
 
