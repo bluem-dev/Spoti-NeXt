@@ -28,9 +28,15 @@
 - Loggin plano: ahora usa log.Print de stdlib.
 - ...
 
-# Información de características nuevas
+# Implementaciones y características
 
-- Limitaciones de [Dolby Atmos, TIDAL](ATMOS.md)<br>
+- [TIDAL: Dolby Atmos](docs/tidal_atmos.md)<br>
+- [TIDAL: Debug Account](docs/tidal_account_debug.md)<br>
+- [TIDAL: Account](docs/tidal_account_atmos.md)<br>
+- [Modo directo](docs/next_direct_mode.md)<br>
+- [Calidad de formato](docs/next_quality_format.md)<br>
+- [Metadata](docs/next_metadata.md)<br>
+- [Resolución de enlaces](docs/url_resolver.md)<br>
 
 # Futuras implementaciones y correcciones
 
