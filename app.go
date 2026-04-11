@@ -108,11 +108,19 @@ func (a *App) getFirstArtist(artistString string) string {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 
+	// Wire backend debug logs → frontend debug panel.
+	backend.SetDebugEmitter(func(msg string) {
+		runtime.EventsEmit(ctx, "debug:atmos", msg)
+	})
+
 	if err := backend.InitHistoryDB("SpotiFLAC"); err != nil {
 		fmt.Printf("Failed to init history DB: %v\n", err)
 	}
 	if err := backend.InitISRCCacheDB(); err != nil {
 		fmt.Printf("Failed to init ISRC cache DB: %v\n", err)
+	}
+	if err := backend.InitResolverCacheDB(); err != nil {
+		fmt.Printf("Failed to init resolver cache DB: %v\n", err)
 	}
 	if err := backend.InitProviderPriorityDB(); err != nil {
 		fmt.Printf("Failed to init provider priority DB: %v\n", err)
@@ -122,6 +130,7 @@ func (a *App) startup(ctx context.Context) {
 func (a *App) shutdown(ctx context.Context) {
 	backend.CloseHistoryDB()
 	backend.CloseISRCCacheDB()
+	backend.CloseResolverCacheDB()
 	backend.CloseProviderPriorityDB()
 }
 
@@ -168,15 +177,17 @@ type DownloadRequest struct {
 	UseSingleGenre       bool   `json:"use_single_genre,omitempty"`
 	EmbedGenre           bool   `json:"embed_genre,omitempty"`
 	Separator            string `json:"separator,omitempty"`
+	IncludeAtmos         bool   `json:"include_atmos,omitempty"`
 }
 
 type DownloadResponse struct {
-	Success       bool   `json:"success"`
-	Message       string `json:"message"`
-	File          string `json:"file,omitempty"`
-	Error         string `json:"error,omitempty"`
-	AlreadyExists bool   `json:"already_exists,omitempty"`
-	ItemID        string `json:"item_id,omitempty"`
+	Success        bool   `json:"success"`
+	Message        string `json:"message"`
+	File           string `json:"file,omitempty"`
+	Error          string `json:"error,omitempty"`
+	AlreadyExists  bool   `json:"already_exists,omitempty"`
+	ItemID         string `json:"item_id,omitempty"`
+	QualityFallback string `json:"quality_fallback,omitempty"`
 }
 
 func cleanupInvalidDownloadArtifacts(paths ...string) {
@@ -249,19 +260,18 @@ func (a *App) GetSpotifyMetadata(req SpotifyMetadataRequest) (string, error) {
 		if useAPI, ok := settings["useSpotFetchAPI"].(bool); ok && useAPI {
 			if apiURL, ok := settings["spotFetchAPIUrl"].(string); ok && apiURL != "" {
 
-				data, err := backend.GetSpotifyDataWithAPI(ctx, req.URL, true, apiURL, req.Batch, time.Duration(req.Delay*float64(time.Second)), separator, func(tracks interface{}) {
+				data, apiErr := backend.GetSpotifyDataWithAPI(ctx, req.URL, true, apiURL, req.Batch, time.Duration(req.Delay*float64(time.Second)), separator, func(tracks interface{}) {
 					runtime.EventsEmit(a.ctx, "metadata-stream", tracks)
 				})
-				if err != nil {
-					return "", fmt.Errorf("failed to fetch metadata from API: %v", err)
+				if apiErr == nil {
+					jsonData, err := json.MarshalIndent(data, "", "  ")
+					if err != nil {
+						return "", fmt.Errorf("failed to encode response: %v", err)
+					}
+					return string(jsonData), nil
 				}
-
-				jsonData, err := json.MarshalIndent(data, "", "  ")
-				if err != nil {
-					return "", fmt.Errorf("failed to encode response: %v", err)
-				}
-
-				return string(jsonData), nil
+				// SpotFetch API failed — fall through to direct Spotify scraping
+				fmt.Printf("[SpotFetch API] request failed (%v), falling back to direct fetch\n", apiErr)
 			}
 		}
 	}
@@ -356,8 +366,16 @@ func (a *App) DownloadTrack(req DownloadRequest) (DownloadResponse, error) {
 		req.AudioFormat = "LOSSLESS"
 	}
 
+	// When Atmos is requested for Tidal, override the quality string.
+	// The backend fallback chain handles the case where Atmos is unavailable.
+	runtime.EventsEmit(a.ctx, "debug:atmos", fmt.Sprintf("[atmos-diag] service=%s include_atmos=%v audio_format=%s account_active=%v", req.Service, req.IncludeAtmos, req.AudioFormat, backend.TidalAccountAvailable()))
+	if req.IncludeAtmos && req.Service == "tidal" {
+		req.AudioFormat = "DOLBY_ATMOS"
+	}
+
 	var err error
 	var filename string
+	var resolvedQuality string
 
 	if req.FilenameFormat == "" {
 		req.FilenameFormat = "title-artist"
@@ -509,16 +527,16 @@ func (a *App) DownloadTrack(req DownloadRequest) (DownloadResponse, error) {
 		if req.ApiURL == "" || req.ApiURL == "auto" {
 			downloader := backend.NewTidalDownloader("")
 			if req.ServiceURL != "" {
-				filename, err = downloader.DownloadByURLWithFallback(req.ServiceURL, req.OutputDir, req.AudioFormat, req.FilenameFormat, req.TrackNumber, req.Position, req.TrackName, req.ArtistName, req.AlbumName, req.AlbumArtist, req.ReleaseDate, req.UseAlbumTrackNumber, req.CoverURL, req.EmbedMaxQualityCover, req.SpotifyTrackNumber, req.SpotifyDiscNumber, req.SpotifyTotalTracks, req.SpotifyTotalDiscs, req.Copyright, req.Publisher, spotifyURL, req.AllowFallback, req.UseFirstArtistOnly, req.UseSingleGenre, req.EmbedGenre)
+				filename, resolvedQuality, err = downloader.DownloadByURLWithFallback(req.ServiceURL, req.OutputDir, req.AudioFormat, req.FilenameFormat, req.TrackNumber, req.Position, req.TrackName, req.ArtistName, req.AlbumName, req.AlbumArtist, req.ReleaseDate, req.UseAlbumTrackNumber, req.CoverURL, req.EmbedMaxQualityCover, req.SpotifyTrackNumber, req.SpotifyDiscNumber, req.SpotifyTotalTracks, req.SpotifyTotalDiscs, req.Copyright, req.Publisher, spotifyURL, req.AllowFallback, req.UseFirstArtistOnly, req.UseSingleGenre, req.EmbedGenre)
 			} else {
-				filename, err = downloader.Download(req.SpotifyID, req.OutputDir, req.AudioFormat, req.FilenameFormat, req.TrackNumber, req.Position, req.TrackName, req.ArtistName, req.AlbumName, req.AlbumArtist, req.ReleaseDate, req.UseAlbumTrackNumber, req.CoverURL, req.EmbedMaxQualityCover, req.SpotifyTrackNumber, req.SpotifyDiscNumber, req.SpotifyTotalTracks, req.SpotifyTotalDiscs, req.Copyright, req.Publisher, spotifyURL, req.AllowFallback, req.UseFirstArtistOnly, req.UseSingleGenre, req.EmbedGenre)
+				filename, resolvedQuality, err = downloader.Download(req.SpotifyID, req.OutputDir, req.AudioFormat, req.FilenameFormat, req.TrackNumber, req.Position, req.TrackName, req.ArtistName, req.AlbumName, req.AlbumArtist, req.ReleaseDate, req.UseAlbumTrackNumber, req.CoverURL, req.EmbedMaxQualityCover, req.SpotifyTrackNumber, req.SpotifyDiscNumber, req.SpotifyTotalTracks, req.SpotifyTotalDiscs, req.Copyright, req.Publisher, spotifyURL, req.AllowFallback, req.UseFirstArtistOnly, req.UseSingleGenre, req.EmbedGenre)
 			}
 		} else {
 			downloader := backend.NewTidalDownloader(req.ApiURL)
 			if req.ServiceURL != "" {
-				filename, err = downloader.DownloadByURL(req.ServiceURL, req.OutputDir, req.AudioFormat, req.FilenameFormat, req.TrackNumber, req.Position, req.TrackName, req.ArtistName, req.AlbumName, req.AlbumArtist, req.ReleaseDate, req.UseAlbumTrackNumber, req.CoverURL, req.EmbedMaxQualityCover, req.SpotifyTrackNumber, req.SpotifyDiscNumber, req.SpotifyTotalTracks, req.SpotifyTotalDiscs, req.Copyright, req.Publisher, spotifyURL, req.AllowFallback, req.UseFirstArtistOnly, req.UseSingleGenre, req.EmbedGenre)
+				filename, resolvedQuality, err = downloader.DownloadByURL(req.ServiceURL, req.OutputDir, req.AudioFormat, req.FilenameFormat, req.TrackNumber, req.Position, req.TrackName, req.ArtistName, req.AlbumName, req.AlbumArtist, req.ReleaseDate, req.UseAlbumTrackNumber, req.CoverURL, req.EmbedMaxQualityCover, req.SpotifyTrackNumber, req.SpotifyDiscNumber, req.SpotifyTotalTracks, req.SpotifyTotalDiscs, req.Copyright, req.Publisher, spotifyURL, req.AllowFallback, req.UseFirstArtistOnly, req.UseSingleGenre, req.EmbedGenre)
 			} else {
-				filename, err = downloader.Download(req.SpotifyID, req.OutputDir, req.AudioFormat, req.FilenameFormat, req.TrackNumber, req.Position, req.TrackName, req.ArtistName, req.AlbumName, req.AlbumArtist, req.ReleaseDate, req.UseAlbumTrackNumber, req.CoverURL, req.EmbedMaxQualityCover, req.SpotifyTrackNumber, req.SpotifyDiscNumber, req.SpotifyTotalTracks, req.SpotifyTotalDiscs, req.Copyright, req.Publisher, spotifyURL, req.AllowFallback, req.UseFirstArtistOnly, req.UseSingleGenre, req.EmbedGenre)
+				filename, resolvedQuality, err = downloader.Download(req.SpotifyID, req.OutputDir, req.AudioFormat, req.FilenameFormat, req.TrackNumber, req.Position, req.TrackName, req.ArtistName, req.AlbumName, req.AlbumArtist, req.ReleaseDate, req.UseAlbumTrackNumber, req.CoverURL, req.EmbedMaxQualityCover, req.SpotifyTrackNumber, req.SpotifyDiscNumber, req.SpotifyTotalTracks, req.SpotifyTotalDiscs, req.Copyright, req.Publisher, spotifyURL, req.AllowFallback, req.UseFirstArtistOnly, req.UseSingleGenre, req.EmbedGenre)
 			}
 		}
 
@@ -532,6 +550,17 @@ func (a *App) DownloadTrack(req DownloadRequest) (DownloadResponse, error) {
 			quality = "6"
 		}
 		filename, err = downloader.DownloadTrackWithISRC(isrc, req.OutputDir, quality, req.FilenameFormat, req.TrackNumber, req.Position, req.TrackName, req.ArtistName, req.AlbumName, req.AlbumArtist, req.ReleaseDate, req.UseAlbumTrackNumber, req.CoverURL, req.EmbedMaxQualityCover, req.SpotifyTrackNumber, req.SpotifyDiscNumber, req.SpotifyTotalTracks, req.SpotifyTotalDiscs, req.Copyright, req.Publisher, spotifyURL, req.AllowFallback, req.UseFirstArtistOnly, req.UseSingleGenre, req.EmbedGenre)
+
+	case "deezer":
+		// Deezer is exposed in the UI but resolved via the Tidal downloader
+		// using the service_url obtained from link resolution.
+		downloader := backend.NewTidalDownloader("")
+		downloader.DownloadSourceOverride = "Deezer"
+		if req.ServiceURL != "" {
+			filename, resolvedQuality, err = downloader.DownloadByURLWithFallback(req.ServiceURL, req.OutputDir, "LOSSLESS", req.FilenameFormat, req.TrackNumber, req.Position, req.TrackName, req.ArtistName, req.AlbumName, req.AlbumArtist, req.ReleaseDate, req.UseAlbumTrackNumber, req.CoverURL, req.EmbedMaxQualityCover, req.SpotifyTrackNumber, req.SpotifyDiscNumber, req.SpotifyTotalTracks, req.SpotifyTotalDiscs, req.Copyright, req.Publisher, spotifyURL, req.AllowFallback, req.UseFirstArtistOnly, req.UseSingleGenre, req.EmbedGenre)
+		} else {
+			filename, resolvedQuality, err = downloader.Download(req.SpotifyID, req.OutputDir, "LOSSLESS", req.FilenameFormat, req.TrackNumber, req.Position, req.TrackName, req.ArtistName, req.AlbumName, req.AlbumArtist, req.ReleaseDate, req.UseAlbumTrackNumber, req.CoverURL, req.EmbedMaxQualityCover, req.SpotifyTrackNumber, req.SpotifyDiscNumber, req.SpotifyTotalTracks, req.SpotifyTotalDiscs, req.Copyright, req.Publisher, spotifyURL, req.AllowFallback, req.UseFirstArtistOnly, req.UseSingleGenre, req.EmbedGenre)
+		}
 
 	default:
 		return DownloadResponse{
@@ -676,15 +705,24 @@ func (a *App) DownloadTrack(req DownloadRequest) (DownloadResponse, error) {
 			}
 
 			backend.AddHistoryItem(item, "SpotiFLAC")
-		}(filename, req.TrackName, req.ArtistName, req.AlbumName, req.SpotifyID, req.CoverURL, req.AudioFormat, req.Service)
+		}(filename, req.TrackName, req.ArtistName, req.AlbumName, req.SpotifyID, req.CoverURL, resolvedQuality, req.Service)
+	}
+
+	qualityFallback := ""
+	if resolvedQuality != "" && resolvedQuality != req.AudioFormat {
+		qualityFallback = resolvedQuality
+	}
+	if req.IncludeAtmos && req.Service == "tidal" {
+		runtime.EventsEmit(a.ctx, "debug:atmos", fmt.Sprintf("[atmos-result] requested=DOLBY_ATMOS resolved=%s fallback=%s", resolvedQuality, qualityFallback))
 	}
 
 	return DownloadResponse{
-		Success:       true,
-		Message:       message,
-		File:          filename,
-		AlreadyExists: alreadyExists,
-		ItemID:        itemID,
+		Success:         true,
+		Message:         message,
+		File:            filename,
+		AlreadyExists:   alreadyExists,
+		ItemID:          itemID,
+		QualityFallback: qualityFallback,
 	}, nil
 }
 
@@ -793,7 +831,7 @@ func (a *App) ExportFailedDownloads() (string, error) {
 	}
 
 	content := strings.Join(failedItems, "\n")
-	defaultFilename := fmt.Sprintf("SpotiFLAC_%s_Failed.txt", time.Now().Format("20060102_150405"))
+	defaultFilename := fmt.Sprintf("SpotiNeXt_%s_Failed.txt", time.Now().Format("20060102_150405"))
 
 	path, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
 		DefaultFilename: defaultFilename,
@@ -883,9 +921,46 @@ func (a *App) CheckAPIStatus(apiType string, apiURL string) bool {
 	return isOnline
 }
 
-func (a *App) Quit() {
+func (a *App) CheckAtmosSupport(apiURL string) string {
+	// Track ID 441821360 is "G.U.Y." by Lady Gaga — known Atmos title used
+	// for the existing health check, reused here.
+	// Track ID 211657452 is "Elizabeth Taylor" by Taylor Swift — second known Atmos title as fallback probe.
+	probeIDs := []int64{441821360, 211657452}
 
-	panic("quit")
+	result, err := runWithTimeout(checkOperationTimeout, func() (string, error) {
+		client := &http.Client{Timeout: 10 * time.Second}
+
+		for _, trackID := range probeIDs {
+			url := fmt.Sprintf("%s/track/?id=%d&quality=DOLBY_ATMOS", apiURL, trackID)
+			req, err := http.NewRequest("GET", url, nil)
+			if err != nil {
+				continue
+			}
+			req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36")
+
+			resp, err := client.Do(req)
+			if err != nil {
+				continue
+			}
+
+			body, err := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			if err != nil || resp.StatusCode != 200 {
+				continue
+			}
+
+			var v2 backend.TidalAPIResponseV2Exported
+			if err := json.Unmarshal(body, &v2); err == nil && v2.Data.Manifest != "" {
+				return v2.Data.AudioMode, nil
+			}
+		}
+		return "UNKNOWN", nil
+	})
+	if err != nil {
+		fmt.Printf("CheckAtmosSupport timeout/error for %s: %v\n", apiURL, err)
+		return "UNKNOWN"
+	}
+	return result
 }
 
 func (a *App) GetDownloadHistory() ([]backend.HistoryItem, error) {
@@ -1625,6 +1700,88 @@ func (a *App) LoadSettings() (map[string]interface{}, error) {
 
 func (a *App) CheckFFmpegInstalled() (bool, error) {
 	return backend.IsFFmpegInstalled()
+}
+
+// ── Tidal Account (device-link OAuth) ─────────────────────────────────────
+
+// TidalAccountStartLogin initiates the OAuth device-link flow. Returns the
+// verification URL the user must open in a browser to approve the login.
+func (a *App) TidalAccountStartLogin() (map[string]interface{}, error) {
+	link, err := backend.StartDeviceLogin()
+	if err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{
+		"verification_uri_complete": link.VerificationURIComplete,
+		"verification_uri":          link.VerificationURI,
+		"device_code":               link.DeviceCode,
+		"expires_in":                link.ExpiresIn,
+		"interval":                  link.Interval,
+	}, nil
+}
+
+// TidalAccountPollLogin polls for the user to approve the device link. Blocks
+// until approval or expiry. On success, returns the session data to persist.
+func (a *App) TidalAccountPollLogin(deviceCode string, interval, expiresIn int) (map[string]interface{}, error) {
+	session, err := backend.PollDeviceLogin(deviceCode, interval, expiresIn)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{
+		"access_token":  session.AccessToken,
+		"refresh_token": session.RefreshToken,
+		"expires_at":    session.ExpiresAt.Format(time.RFC3339),
+		"country_code":  session.CountryCode,
+		"user_id":       session.UserID,
+		"client_id":     session.ClientID,
+	}, nil
+}
+
+// TidalAccountLoadSession restores a persisted session from settings.
+// Called on startup after LoadSettings.
+func (a *App) TidalAccountLoadSession(accessToken, refreshToken, expiresAt, countryCode, clientID string, userID int64) error {
+	if accessToken == "" {
+		fmt.Println("TidalAccountLoadSession: accessToken empty, skipping")
+		return nil
+	}
+	expiry, err := time.Parse(time.RFC3339, expiresAt)
+	if err != nil {
+		fmt.Printf("TidalAccountLoadSession: expiresAt parse error (%q): %v — using 24h fallback", expiresAt, err)
+		expiry = time.Now().Add(24 * time.Hour)
+	}
+	session := &backend.TidalAccountSession{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		ExpiresAt:    expiry,
+		CountryCode:  countryCode,
+		UserID:       userID,
+		ClientID:     clientID,
+	}
+	// Reject sessions generated with a different client ID — tokens are bound
+	// to the client that issued them. The user must re-login once after an
+	// upgrade that changes the client ID (e.g. adding Atmos support).
+	if !session.IsCompatible() {
+		fmt.Printf("TidalAccountLoadSession: session client_id=%q does not match current %q — discarding, re-login required\n", clientID, backend.CurrentTidalClientID())
+		return nil
+	}
+	fmt.Printf("TidalAccountLoadSession: restoring session, countryCode=%q, userID=%d, expiresAt=%s (valid=%v)\n",
+		countryCode, userID, expiry.Format(time.RFC3339), time.Now().Before(expiry))
+	backend.SetGlobalTidalSession(session)
+	fmt.Println("TidalAccountLoadSession: session set successfully")
+	return nil
+}
+
+// TidalAccountLogout clears the current session.
+func (a *App) TidalAccountLogout() {
+	backend.SetGlobalTidalSession(nil)
+}
+
+// TidalAccountStatus returns a summary of the current session state.
+func (a *App) TidalAccountStatus() map[string]interface{} {
+	available := backend.TidalAccountAvailable()
+	return map[string]interface{}{
+		"logged_in": available,
+	}
 }
 
 func (a *App) CreateM3U8File(m3u8Name string, outputDir string, filePaths []string) error {

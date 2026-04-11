@@ -34,7 +34,7 @@ func main() {
 	app := NewApp()
 
 	err := wails.Run(&options.App{
-		Title:     "SpotiFLAC",
+		Title:     "Spoti NeXt",
 		Width:     1024,
 		Height:    600,
 		MinWidth:  1024,
