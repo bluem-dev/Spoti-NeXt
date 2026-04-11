@@ -1,12 +1,10 @@
-# Modo Directo — Documentación técnica
+# Modo directo
 
 ## Estado
+> Implementado. Funcional.
+___
 
-Implementado. Funcional.
-
----
-
-## Qué es
+## ¿Qué es?
 
 El modo directo fuerza a Spoti NeXt a descargar **únicamente desde la fuente seleccionada**, sin intentar fuentes alternativas si la descarga falla. Es la contraparte del comportamiento por defecto, que usa fallback automático entre proveedores.
 
@@ -14,7 +12,7 @@ Está disponible solo cuando el downloader está configurado en una fuente espec
 
 ---
 
-## Dónde se activa
+## ¿Dónde se activa?
 
 **Settings → General → Downloader**
 
