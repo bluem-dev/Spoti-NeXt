@@ -13,7 +13,7 @@
 | Fuente única (DD) | 🟩 Implementado |
 | Resolución de enlaces | 🟩 Corregido y extendido |
 | Metadata: fuente (DD) | 🟩 Implementado |
-| Descarga: Atmos (TIDAL) | 🟥  En pruebas... |
+| Descarga: Atmos (TIDAL) | 🟩 Implementado |
 | Idiomas: inglés, español | 🟩 Implementado |
 | Desc. simultáneas | 🟥 Pendiente |
 
@@ -27,6 +27,15 @@
 - ISRC/TTL: corrección de caché, tiempo y duplicado.
 - Loggin plano: ahora usa log.Print de stdlib.
 - ...
+
+# INFORMACIÓN DE CARACTERISTICAS
+
+- Dolby Atmos:<br>
+→ Requiere cuenta TIDAL vinculada.<br>
+Cuando está disponible, accede al stream E-AC3 en formato M4A.<br>
+Si el track/cuenta no tienen acceso a D. Atmos, se descarga en HI_RES_LOSSLESS como alternativa.<br>
+La disponibilidad depende del plan de suscripción y del catálogo regional.<br>
+Spoti NeXt no puede garantizar Atmos en todos los casos.<br>
 
 # FUTURAS IMPLEMENTACIONES
 
