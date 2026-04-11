@@ -6,37 +6,25 @@
 
 ***
 
-## CARACTERÍSTICAS DE NeXt
+## CARACTERÍSTICAS
 
-- Soporte de idioma: en, es. | EN DESARROLLO...
-- Descarga: Atmos (Tidal) | PENDIENTE, EN DESARROLLO.
-- Opción: fuente de descarga única (directa).
-- Opción: metadata personalizada. | PENDIENTE.
-- Opción: descargas simultáneas. | PENDIENTE.
-- Opción de formatos: FLAC, M4A, WAV y MP3. + selecc. automática. | PENDIENTE.
-- Extensión de resolución de enlaces y búsqueda. | IMPLEMENTADO, AÚN EN DESARROLLO.
-- Adición de metadata: fuente de audio obtenido. 
-- ...
+| Función | Estado |
+|------|--------|
+| Fuente única (DD) | 🟩 Implementado |
+| Resolución de enlaces | 🟩 Corregido y extendido |
+| Metadata: fuente (DD) | 🟩 Implementado |
+| Descarga: Atmos (TIDAL) | 🟧 En pruebas de desarrollo |
+| Idiomas: inglés, español | 🟩 Implementado |
+| Desc. simultáneas | 🟥 Pendiente |
 
-# HISTORIAL DE CAMBIOS
 
-Información sobre los cambios de corrección 
-y adiciones en la aplicación.
+# INFORMACIÓN DE CORRECCIONES
 
-### NUEVO
-- Características de idioma, estabilización de código y descargas.
-
-### PENDIENTES
-- ...
-
-### CORREGIDO
-
-- Resolución de URLs por región y variantes: 
-errores al ser enlaces con ubicaciones/idioma explícitos. 
-Ahora se resuelven automáticamente sin importar 
-la región/idioma.
-- Conflicto "SpotiFetch API" & "Fetch Data".
-- Correcciones en ISRC/TTL: caché, tiempo, duplicado.
+- Resolución de enlaces:<br>
+→ Solución a errores de obtención de datos y cruce fallidos.<br>
+→ Extensión de URL y regiones: los enlaces se resuelven sin importar región.<br>
+→ Relacionados a "SpotiFetch API" & "Fetch Data".<br>
+- ISRC/TTL: corrección de caché, tiempo y duplicado.
 - Loggin plano: ahora usa log.Print de stdlib.
 - ...
 
