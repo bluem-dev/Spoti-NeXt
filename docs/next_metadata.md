@@ -1,10 +1,8 @@
-# Metadata — Documentación técnica
+# Metadata
 
 ## Estado
-
-Implementado. Funcional.
-
----
+> Implementado. Funcional.
+___
 
 ## Fuentes de metadata
 
@@ -19,7 +17,7 @@ Spoti NeXt obtiene metadata de múltiples fuentes y las combina en el archivo de
 | **VGMdb** | Metadata para soundtracks de videojuegos y anime |
 | **Lyrics providers** | Letras sincronizadas o en texto plano |
 
-Las fuentes de enriquecimiento (Discogs, iTunes, VGMdb) están implementadas pero su integración al flujo de descarga está pendiente — ver BACKLOG (`wire-metadata-enrichment`).
+Las fuentes de enriquecimiento (Discogs, iTunes, VGMdb) están implementadas pero su integración al flujo de descarga está pendiente. (`wire-metadata-enrichment`).
 
 ---
 
