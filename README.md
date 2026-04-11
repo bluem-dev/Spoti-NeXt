@@ -1,4 +1,4 @@
-# Spoti NeXt
+## Spoti NeXt
 
 "Spoti NeXt" está basada en la versión original creada por afkarxyz.
 
@@ -6,7 +6,7 @@
 
 ***
 
-## Características
+# Características
 
 | Función | Estado |
 |------|--------|
@@ -41,7 +41,7 @@
 - Expansión de directorios: distinción EPs, Remixes, Compilations, Playlists, Deluxe, Editions...<br>
 - ...
 
-## DECLARACIÓN
+# Declaración
 
 El proyecto está enfocado con própositos educacionales, y de uso privado. Sin ánimos de lucro. Su autor/creador no fomenta la infracción sobre derechos de autor.
 
@@ -50,7 +50,7 @@ servicio de streaming.
 
 ***
 
-## CRÉDITOS DE APIs & APLICACIÓN
+# Créditos de API y SpotiFLAC
 
-[MusicBrainz](https://musicbrainz.org) · [LRCLIB](https://lrclib.net) · [Songlink/Odesli](https://song.link) · [hifi-api](https://github.com/binimum/hifi-api) · [dabmusic.xyz](https://dabmusic.xyz) · [SpotiFLAC](https://github.com/afkarxyz/SpotiFLAC)
+[MusicBrainz](https://musicbrainz.org) · [LRCLIB](https://lrclib.net) · [Songlink/Odesli](https://song.link) · [hifi-api](https://github.com/binimum/hifi-api) · [dabmusic.xyz](https://dabmusic.xyz) · [SpotiFLAC](https://github.com/afkarxyz/SpotiFLAC) · [Orpheus/RedSea for TIDAL](https://github.com/Dniel97)
 
