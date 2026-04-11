@@ -1,18 +1,17 @@
-# Cuenta Tidal — Documentación técnica
+# Cuenta Tidal
 
 ## Estado
+> Implementado. Funcional bajo las condiciones descritas abajo.
 
-Implementado. Funcional bajo las condiciones descritas abajo.
+___
 
----
-
-## Qué es
+## ¿Qué es?
 
 La vinculación de una cuenta Tidal personal permite a Spoti NeXt obtener streams directamente con las credenciales del usuario, en lugar de depender de proxies de terceros. Es requisito para acceder a Dolby Atmos.
 
 ---
 
-## Cómo vincular
+## ¿Cómo vincular?
 
 **Settings → Advanced → Tidal Account**
 
