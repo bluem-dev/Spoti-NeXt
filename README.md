@@ -28,6 +28,19 @@
 - Loggin plano: ahora usa log.Print de stdlib.
 - ...
 
+# FUTURAS IMPLEMENTACIONES
+
+- Selector de formatos: FLAC, M4A, OPUS, MP3.<br>
+→ Modalidades: manual y automática (definida por calidad adecuada).<br>
+- División de álbumes: DISC 1 X DISC 2 x DISC 3, etc. Órden original.
+- ...
+
+# FUTURAS CORRECCIONES
+
+- Conservar portadas y metadata en todos los formatos con compatibilidad: ID3Tag.<br>
+- Expansión de directorios: distinción EPs, Remixes, Compilations, Playlists, Deluxe, Editions...<br>
+- ...
+
 ## DECLARACIÓN
 
 This project is for **educational and private use only**. The developer does not condone or encourage copyright infringement.
