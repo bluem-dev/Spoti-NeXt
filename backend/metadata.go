@@ -17,24 +17,25 @@ import (
 )
 
 type Metadata struct {
-	Title       string
-	Artist      string
-	Album       string
-	AlbumArtist string
-	Date        string
-	ReleaseDate string
-	TrackNumber int
-	TotalTracks int
-	DiscNumber  int
-	TotalDiscs  int
-	URL         string
-	Comment     string
-	Copyright   string
-	Publisher   string
-	Lyrics      string
-	Description string
-	ISRC        string
-	Genre       string
+	Title          string
+	Artist         string
+	Album          string
+	AlbumArtist    string
+	Date           string
+	ReleaseDate    string
+	TrackNumber    int
+	TotalTracks    int
+	DiscNumber     int
+	TotalDiscs     int
+	URL            string
+	Comment        string
+	Copyright      string
+	Publisher      string
+	Lyrics         string
+	Description    string
+	ISRC           string
+	Genre          string
+	DownloadSource string
 }
 
 func EmbedMetadata(filepath string, metadata Metadata, coverPath string) error {
@@ -103,6 +104,10 @@ func EmbedMetadata(filepath string, metadata Metadata, coverPath string) error {
 
 	if metadata.Lyrics != "" {
 		_ = cmt.Add("LYRICS", metadata.Lyrics)
+	}
+
+	if metadata.DownloadSource != "" {
+		_ = cmt.Add("DOWNLOAD_SOURCE", metadata.DownloadSource)
 	}
 
 	cmtBlock := cmt.Marshal()
@@ -1027,6 +1032,14 @@ func embedMetadataToMP3(filePath string, metadata Metadata, coverPath string) er
 		}
 	}
 
+	if metadata.DownloadSource != "" {
+		tag.AddUserDefinedTextFrame(id3v2.UserDefinedTextFrame{
+			Encoding:    id3v2.EncodingUTF8,
+			Description: "DOWNLOAD_SOURCE",
+			Value:       metadata.DownloadSource,
+		})
+	}
+
 	if err := tag.Save(); err != nil {
 		return fmt.Errorf("failed to save MP3 tags: %w", err)
 	}
@@ -1096,6 +1109,9 @@ func embedMetadataToM4A(filePath string, metadata Metadata, coverPath string) er
 	}
 	if comment := resolveMetadataComment(metadata); comment != "" {
 		args = append(args, "-metadata", "comment="+comment)
+	}
+	if metadata.DownloadSource != "" {
+		args = append(args, "-metadata", "download_source="+metadata.DownloadSource)
 	}
 
 	tmpOutputFile := strings.TrimSuffix(filePath, pathfilepath.Ext(filePath)) + ".tmp" + pathfilepath.Ext(filePath)

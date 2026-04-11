@@ -14,6 +14,12 @@ import (
 const (
 	isrcCacheDBFile = "isrc_cache.db"
 	isrcCacheBucket = "SpotifyTrackISRC"
+
+	// isrcCacheTTL is how long a cached ISRC is considered valid. ISRCs are
+	// permanent identifiers assigned at release, so a long TTL is appropriate.
+	// 90 days covers re-masterisations or catalogue corrections that can cause
+	// a Spotify track to receive a new ISRC while keeping its track ID.
+	isrcCacheTTL = 90 * 24 * time.Hour
 )
 
 type isrcCacheEntry struct {
@@ -93,6 +99,12 @@ func GetCachedISRC(trackID string) (string, error) {
 		var entry isrcCacheEntry
 		if err := json.Unmarshal(value, &entry); err != nil {
 			return err
+		}
+
+		// Treat entries older than isrcCacheTTL as expired so that catalogue
+		// corrections or re-masterisations with a new ISRC are picked up.
+		if entry.UpdatedAt > 0 && time.Since(time.Unix(entry.UpdatedAt, 0)) > isrcCacheTTL {
+			return nil
 		}
 
 		cachedISRC = strings.ToUpper(strings.TrimSpace(entry.ISRC))

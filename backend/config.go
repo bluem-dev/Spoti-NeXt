@@ -7,6 +7,12 @@ import (
 	"strings"
 )
 
+const (
+	// defaultSpotFetchAPIURL is the fallback SpotFetch API endpoint used when
+	// the user has enabled the API but has not set a custom URL in settings.
+	defaultSpotFetchAPIURL = "https://sp.afkarxyz.qzz.io/api"
+)
+
 func GetDefaultMusicPath() string {
 
 	homeDir, err := os.UserHomeDir()
@@ -63,7 +69,7 @@ func GetSpotFetchAPISettings() (bool, string) {
 
 	apiURL, _ := settings["spotFetchAPIUrl"].(string)
 	if apiURL == "" {
-		apiURL = "https://sp.afkarxyz.qzz.io/api"
+		apiURL = defaultSpotFetchAPIURL
 	}
 
 	return true, apiURL

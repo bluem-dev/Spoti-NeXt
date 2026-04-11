@@ -100,6 +100,22 @@ func applySongstatsSameAs(value interface{}, links *resolvedTrackLinks) {
 	}
 }
 
+// isTidalTrackLink reports whether link is any known Tidal track URL variant:
+//   - https://listen.tidal.com/track/NNNNN  (web player)
+//   - https://tidal.com/browse/track/NNNNN  (browse/share URL)
+//   - https://tidal.com/track/NNNNN         (legacy direct URL)
+func isTidalTrackLink(link string) bool {
+	return strings.Contains(link, "/track/") &&
+		(strings.Contains(link, "listen.tidal.com") || strings.Contains(link, "tidal.com"))
+}
+
+// isAmazonMusicLink reports whether link belongs to any regional Amazon Music
+// domain. Amazon Music operates under music.amazon.<tld> across all regions,
+// so we match on the shared "music.amazon." prefix rather than only ".com".
+func isAmazonMusicLink(link string) bool {
+	return strings.Contains(link, "music.amazon.")
+}
+
 func assignSongstatsLink(rawLink string, links *resolvedTrackLinks) {
 	link := strings.TrimSpace(rawLink)
 	if link == "" {
@@ -107,22 +123,22 @@ func assignSongstatsLink(rawLink string, links *resolvedTrackLinks) {
 	}
 
 	switch {
-	case strings.Contains(link, "listen.tidal.com/track"):
+	case isTidalTrackLink(link):
 		if links.TidalURL == "" {
 			links.TidalURL = link
-			fmt.Println("✓ Tidal URL found via Songstats")
+			fmt.Println("[Songstats] ✓ Tidal URL found")
 		}
-	case strings.Contains(link, "music.amazon.com"):
+	case isAmazonMusicLink(link):
 		if links.AmazonURL == "" {
 			if normalized := normalizeAmazonMusicURL(link); normalized != "" {
 				links.AmazonURL = normalized
-				fmt.Println("✓ Amazon URL found via Songstats")
+				fmt.Println("[Songstats] ✓ Amazon URL found")
 			}
 		}
 	case strings.Contains(link, "deezer.com"):
 		if links.DeezerURL == "" {
 			links.DeezerURL = normalizeDeezerTrackURL(link)
-			fmt.Println("✓ Deezer URL found via Songstats")
+			fmt.Println("[Songstats] ✓ Deezer URL found")
 		}
 	}
 }

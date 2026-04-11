@@ -81,7 +81,7 @@ func prioritizeProviders(service string, providers []string) []string {
 	}
 
 	if err := InitProviderPriorityDB(); err != nil {
-		fmt.Printf("Warning: failed to init provider priority DB: %v\n", err)
+		fmt.Printf("[ProviderPriority] warning: failed to init DB: %v\n", err)
 		return ordered
 	}
 
@@ -105,7 +105,7 @@ func prioritizeProviders(service string, providers []string) []string {
 		}
 		return nil
 	}); err != nil {
-		fmt.Printf("Warning: failed to read provider priority DB: %v\n", err)
+		fmt.Printf("[ProviderPriority] warning: failed to read DB: %v\n", err)
 		return ordered
 	}
 
@@ -152,7 +152,7 @@ func recordProviderOutcome(service string, provider string, success bool) {
 	}
 
 	if err := InitProviderPriorityDB(); err != nil {
-		fmt.Printf("Warning: failed to init provider priority DB: %v\n", err)
+		fmt.Printf("[ProviderPriority] warning: failed to init DB: %v\n", err)
 		return
 	}
 
@@ -195,7 +195,7 @@ func recordProviderOutcome(service string, provider string, success bool) {
 
 		return bucket.Put([]byte(providerKey), payload)
 	}); err != nil {
-		fmt.Printf("Warning: failed to update provider priority DB: %v\n", err)
+		fmt.Printf("[ProviderPriority] warning: failed to update DB: %v\n", err)
 	}
 }
 

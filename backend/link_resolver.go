@@ -10,6 +10,7 @@ type resolvedTrackLinks struct {
 	TidalURL  string
 	AmazonURL string
 	DeezerURL string
+	QobuzURL  string
 	ISRC      string
 }
 
@@ -29,6 +30,18 @@ func (s *SongLinkClient) resolveSpotifyTrackLinks(spotifyTrackID string, region 
 		links.ISRC = isrc
 	}
 
+	// Check resolver cache before hitting external resolvers.
+	if links.ISRC != "" {
+		if cached := GetCachedResolvedLinks(links.ISRC); cached != nil {
+			links.TidalURL = cached.TidalURL
+			links.AmazonURL = cached.AmazonURL
+			links.DeezerURL = cached.DeezerURL
+			links.QobuzURL = cached.QobuzURL
+			fmt.Printf("[Resolver] cache hit for ISRC %s\n", links.ISRC)
+			return links, nil
+		}
+	}
+
 	if links.ISRC != "" {
 		resolvers := orderedLinkResolvers()
 
@@ -39,19 +52,26 @@ func (s *SongLinkClient) resolveSpotifyTrackLinks(spotifyTrackID string, region 
 				if songstatsErr != nil {
 					attempts = append(attempts, fmt.Sprintf("songstats: %v", songstatsErr))
 				} else if addedData {
-					fmt.Println("Using Songstats as configured link resolver")
+					fmt.Println("[Resolver] using Songstats")
 				}
 			case linkResolverProviderDeezerSongLink:
 				addedData, deezerSongLinkErr := s.resolveLinksViaDeezerSongLink(links, region)
 				if deezerSongLinkErr != nil {
 					attempts = append(attempts, fmt.Sprintf("deezer-songlink: %v", deezerSongLinkErr))
 				} else if addedData {
-					fmt.Println("Using Songlink as configured link resolver")
+					fmt.Println("[Resolver] using Songlink (deezer-songlink)")
 				}
 			}
 
 			if links.TidalURL != "" && links.AmazonURL != "" {
-				return links, nil
+				break
+			}
+		}
+
+		// Write resolved URLs to cache if we got anything useful.
+		if hasAnySongLinkData(links) {
+			if cacheErr := PutCachedResolvedLinks(links.ISRC, links); cacheErr != nil {
+				fmt.Printf("[Resolver] warning: failed to cache resolved links: %v\n", cacheErr)
 			}
 		}
 	}
@@ -96,7 +116,7 @@ func (s *SongLinkClient) resolveLinksViaSongstats(links *resolvedTrackLinks) (bo
 
 	before := *links
 
-	fmt.Printf("Fetching Songstats links for ISRC %s\n", links.ISRC)
+	fmt.Printf("[Resolver] fetching Songstats links for ISRC %s\n", links.ISRC)
 	if err := s.populateLinksFromSongstats(links, links.ISRC); err != nil {
 		return false, err
 	}
@@ -113,18 +133,18 @@ func (s *SongLinkClient) resolveLinksViaDeezerSongLink(links *resolvedTrackLinks
 	var attempts []string
 
 	if links.DeezerURL == "" {
-		fmt.Printf("Resolving Deezer track from ISRC %s\n", links.ISRC)
+		fmt.Printf("[Resolver] resolving Deezer track from ISRC %s\n", links.ISRC)
 		deezerURL, err := s.lookupDeezerTrackURLByISRC(links.ISRC)
 		if err != nil {
 			attempts = append(attempts, fmt.Sprintf("deezer isrc: %v", err))
 		} else {
 			links.DeezerURL = deezerURL
-			fmt.Printf("Found Deezer URL: %s\n", links.DeezerURL)
+			fmt.Printf("[Resolver] found Deezer URL: %s\n", links.DeezerURL)
 		}
 	}
 
 	if links.DeezerURL != "" {
-		fmt.Println("Resolving streaming URLs from song.link via Deezer URL...")
+		fmt.Println("[Resolver] resolving streaming URLs via song.link + Deezer URL")
 		deezerResp, err := s.fetchSongLinkLinksByURL(links.DeezerURL, region)
 		if err != nil {
 			attempts = append(attempts, fmt.Sprintf("song.link deezer: %v", err))

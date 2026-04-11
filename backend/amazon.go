@@ -13,6 +13,12 @@ import (
 	"time"
 )
 
+const (
+	// amazonAfkarAPIBase is the third-party Amazon Music proxy API used to
+	// resolve a track ASIN to a decryptable stream URL.
+	amazonAfkarAPIBase = "https://amzn.afkarxyz.qzz.io/api/track/"
+)
+
 type AmazonDownloader struct {
 	client  *http.Client
 	regions []string
@@ -56,7 +62,7 @@ func (a *AmazonDownloader) DownloadFromAfkarXYZ(amazonURL, outputDir, quality st
 		return "", fmt.Errorf("failed to extract ASIN from URL: %s", amazonURL)
 	}
 
-	apiURL := fmt.Sprintf("https://amzn.afkarxyz.qzz.io/api/track/%s", asin)
+	apiURL := fmt.Sprintf("%s%s", amazonAfkarAPIBase, asin)
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		return "", err
@@ -391,8 +397,9 @@ func (a *AmazonDownloader) DownloadByURL(amazonURL, outputDir, quality, filename
 		Copyright:   spotifyCopyright,
 		Publisher:   spotifyPublisher,
 		Description: "https://github.com/afkarxyz/SpotiFLAC",
-		ISRC:        isrc,
-		Genre:       mbMeta.Genre,
+		ISRC:           isrc,
+		Genre:          mbMeta.Genre,
+		DownloadSource: "Amazon Music",
 	}
 
 	if err := EmbedMetadataToConvertedFile(filePath, metadata, coverPath); err != nil {

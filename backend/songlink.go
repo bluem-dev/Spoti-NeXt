@@ -57,25 +57,35 @@ func NewSongLinkClient() *SongLinkClient {
 
 func (s *SongLinkClient) GetAllURLsFromSpotify(spotifyTrackID string, region string) (*SongLinkURLs, error) {
 	links, err := s.resolveSpotifyTrackLinks(spotifyTrackID, region)
-	if err != nil && (links == nil || (links.TidalURL == "" && links.AmazonURL == "")) {
-		return nil, err
-	}
 
-	urls := &SongLinkURLs{}
-	if links != nil {
-		urls.TidalURL = links.TidalURL
-		urls.AmazonURL = normalizeAmazonMusicURL(links.AmazonURL)
-		urls.ISRC = links.ISRC
-	}
-
-	if urls.TidalURL == "" && urls.AmazonURL == "" {
+	// Hard failure — no links at all and no partial data.
+	if links == nil {
 		if err != nil {
 			return nil, err
 		}
 		return nil, fmt.Errorf("no streaming URLs found")
 	}
 
-	return urls, nil
+	urls := &SongLinkURLs{
+		TidalURL:  links.TidalURL,
+		AmazonURL: normalizeAmazonMusicURL(links.AmazonURL),
+		ISRC:      links.ISRC,
+	}
+
+	// If we have at least one URL, return what we have even when err != nil
+	// (partial resolver failure — e.g. Songstats succeeded but Deezer-SongLink timed out).
+	if urls.TidalURL != "" || urls.AmazonURL != "" {
+		if err != nil {
+			fmt.Printf("[GetAllURLsFromSpotify] partial resolution warning: %v\n", err)
+		}
+		return urls, nil
+	}
+
+	// Nothing useful at all.
+	if err != nil {
+		return nil, err
+	}
+	return nil, fmt.Errorf("no streaming URLs found")
 }
 
 func (s *SongLinkClient) CheckTrackAvailability(spotifyTrackID string) (*TrackAvailability, error) {
@@ -89,9 +99,11 @@ func (s *SongLinkClient) CheckTrackAvailability(spotifyTrackID string) (*TrackAv
 		availability.TidalURL = links.TidalURL
 		availability.AmazonURL = normalizeAmazonMusicURL(links.AmazonURL)
 		availability.DeezerURL = normalizeDeezerTrackURL(links.DeezerURL)
+		availability.QobuzURL = links.QobuzURL
 		availability.Tidal = availability.TidalURL != ""
 		availability.Amazon = availability.AmazonURL != ""
 		availability.Deezer = availability.DeezerURL != ""
+		availability.Qobuz = availability.QobuzURL != ""
 	}
 
 	isrc := ""
@@ -113,7 +125,7 @@ func (s *SongLinkClient) CheckTrackAvailability(spotifyTrackID string) (*TrackAv
 		}
 	}
 
-	if isrc != "" {
+	if isrc != "" && !availability.Qobuz {
 		availability.Qobuz = checkQobuzAvailability(isrc)
 	}
 
@@ -130,12 +142,10 @@ func (s *SongLinkClient) CheckTrackAvailability(spotifyTrackID string) (*TrackAv
 
 func checkQobuzAvailability(isrc string) bool {
 	client := &http.Client{Timeout: 10 * time.Second}
-	appID := "798273057"
-
 	searchURL := fmt.Sprintf(
 		"https://www.qobuz.com/api.json/0.2/track/search?query=%s&limit=1&app_id=%s",
 		url.QueryEscape(strings.TrimSpace(isrc)),
-		appID,
+		qobuzAppID,
 	)
 
 	resp, err := client.Get(searchURL)
@@ -164,7 +174,7 @@ func (s *SongLinkClient) GetDeezerURLFromSpotify(spotifyTrackID string) (string,
 	links, err := s.resolveSpotifyTrackLinks(spotifyTrackID, "")
 	if links != nil && links.DeezerURL != "" {
 		deezerURL := normalizeDeezerTrackURL(links.DeezerURL)
-		fmt.Printf("Found Deezer URL: %s\n", deezerURL)
+		fmt.Printf("[SongLink] found Deezer URL: %s\n", deezerURL)
 		return deezerURL, nil
 	}
 
@@ -184,7 +194,7 @@ func (s *SongLinkClient) GetDeezerURLFromSpotify(spotifyTrackID string) (string,
 	if isrc != "" {
 		deezerURL, deezerErr := s.lookupDeezerTrackURLByISRC(isrc)
 		if deezerErr == nil {
-			fmt.Printf("Found Deezer URL: %s\n", deezerURL)
+			fmt.Printf("[SongLink] found Deezer URL: %s\n", deezerURL)
 			return deezerURL, nil
 		}
 		if err == nil {
@@ -230,7 +240,7 @@ func getDeezerISRC(deezerURL string) (string, error) {
 		return "", fmt.Errorf("ISRC not found in Deezer API response for track %s", trackID)
 	}
 
-	fmt.Printf("Found ISRC from Deezer: %s (track: %s)\n", deezerTrack.ISRC, deezerTrack.Title)
+	fmt.Printf("[SongLink] found ISRC from Deezer: %s (track: %s)\n", deezerTrack.ISRC, deezerTrack.Title)
 	return strings.ToUpper(strings.TrimSpace(deezerTrack.ISRC)), nil
 }
 
@@ -356,18 +366,37 @@ func mergeSongLinkResponse(links *resolvedTrackLinks, resp *songLinkAPIResponse)
 
 	if link, ok := resp.LinksByPlatform["tidal"]; ok && link.URL != "" && links.TidalURL == "" {
 		links.TidalURL = strings.TrimSpace(link.URL)
-		fmt.Println("✓ Tidal URL found")
+		fmt.Println("[SongLink] ✓ Tidal URL found")
 	}
 
 	if link, ok := resp.LinksByPlatform["amazonMusic"]; ok && link.URL != "" && links.AmazonURL == "" {
 		links.AmazonURL = normalizeAmazonMusicURL(link.URL)
-		fmt.Println("✓ Amazon URL found")
+		fmt.Println("[SongLink] ✓ Amazon URL found")
 	}
 
 	if link, ok := resp.LinksByPlatform["deezer"]; ok && link.URL != "" && links.DeezerURL == "" {
 		links.DeezerURL = normalizeDeezerTrackURL(link.URL)
-		fmt.Println("✓ Deezer URL found")
+		fmt.Println("[SongLink] ✓ Deezer URL found")
 	}
+
+	if link, ok := resp.LinksByPlatform["qobuz"]; ok && link.URL != "" && links.QobuzURL == "" {
+		links.QobuzURL = strings.TrimSpace(link.URL)
+		fmt.Println("[SongLink] ✓ Qobuz URL found")
+	}
+}
+
+// extractAmazonTerritory returns the musicTerritory query parameter from a
+// Amazon Music URL when present, falling back to "US". This preserves the
+// regional context of URLs returned by resolvers such as song.link or
+// Songstats so the Amazon Music backend receives the correct territory.
+func extractAmazonTerritory(rawURL string) string {
+	parsed, err := url.Parse(rawURL)
+	if err == nil {
+		if t := parsed.Query().Get("musicTerritory"); t != "" {
+			return t
+		}
+	}
+	return "US"
 }
 
 func normalizeAmazonMusicURL(rawURL string) string {
@@ -376,22 +405,24 @@ func normalizeAmazonMusicURL(rawURL string) string {
 		return ""
 	}
 
+	territory := extractAmazonTerritory(amazonURL)
+
 	if strings.Contains(amazonURL, "trackAsin=") {
 		parts := strings.Split(amazonURL, "trackAsin=")
 		if len(parts) > 1 {
 			trackAsin := strings.Split(parts[1], "&")[0]
 			if trackAsin != "" {
-				return fmt.Sprintf("https://music.amazon.com/tracks/%s?musicTerritory=US", trackAsin)
+				return fmt.Sprintf("https://music.amazon.com/tracks/%s?musicTerritory=%s", trackAsin, territory)
 			}
 		}
 	}
 
 	if match := amazonAlbumTrackPath.FindStringSubmatch(amazonURL); len(match) > 1 {
-		return fmt.Sprintf("https://music.amazon.com/tracks/%s?musicTerritory=US", match[1])
+		return fmt.Sprintf("https://music.amazon.com/tracks/%s?musicTerritory=%s", match[1], territory)
 	}
 
 	if match := amazonTrackPath.FindStringSubmatch(amazonURL); len(match) > 1 {
-		return fmt.Sprintf("https://music.amazon.com/tracks/%s?musicTerritory=US", match[1])
+		return fmt.Sprintf("https://music.amazon.com/tracks/%s?musicTerritory=%s", match[1], territory)
 	}
 
 	return ""
@@ -429,7 +460,7 @@ func hasAnySongLinkData(links *resolvedTrackLinks) bool {
 	if links == nil {
 		return false
 	}
-	return links.TidalURL != "" || links.AmazonURL != "" || links.DeezerURL != ""
+	return links.TidalURL != "" || links.AmazonURL != "" || links.DeezerURL != "" || links.QobuzURL != ""
 }
 
 func firstISRCMatch(body string) string {

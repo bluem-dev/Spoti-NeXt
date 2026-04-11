@@ -5,11 +5,18 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
+)
+
+const (
+	// qobuzAppID is the public Qobuz web-player application identifier used
+	// for unauthenticated track search and availability checks.
+	qobuzAppID = "798273057"
 )
 
 type QobuzDownloader struct {
@@ -72,13 +79,51 @@ func NewQobuzDownloader() *QobuzDownloader {
 		client: &http.Client{
 			Timeout: 60 * time.Second,
 		},
-		appID: "798273057",
+		appID: qobuzAppID,
 	}
+}
+
+func (q *QobuzDownloader) SearchByText(query string, limit int) ([]QobuzTrack, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+	apiBase := "https://www.qobuz.com/api.json/0.2/track/search"
+	searchURL := fmt.Sprintf("%s?query=%s&limit=%d&app_id=%s", apiBase, url.QueryEscape(strings.TrimSpace(query)), limit, q.appID)
+
+	resp, err := q.client.Get(searchURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search tracks: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	if len(body) == 0 {
+		return nil, fmt.Errorf("API returned empty response")
+	}
+
+	var searchResp QobuzSearchResponse
+	if err := json.Unmarshal(body, &searchResp); err != nil {
+		bodyStr := string(body)
+		if len(bodyStr) > 200 {
+			bodyStr = bodyStr[:200] + "..."
+		}
+		return nil, fmt.Errorf("failed to decode response: %w (response: %s)", err, bodyStr)
+	}
+
+	return searchResp.Tracks.Items, nil
 }
 
 func (q *QobuzDownloader) searchByISRC(isrc string) (*QobuzTrack, error) {
 	apiBase := "https://www.qobuz.com/api.json/0.2/track/search?query="
-	url := fmt.Sprintf("%s%s&limit=1&app_id=%s", apiBase, isrc, q.appID)
+	url := fmt.Sprintf("%s%s&limit=1&app_id=%s", apiBase, url.QueryEscape(strings.TrimSpace(isrc)), q.appID)
 
 	resp, err := q.client.Get(url)
 	if err != nil {
@@ -502,8 +547,9 @@ func (q *QobuzDownloader) DownloadTrackWithISRC(isrc, outputDir, quality, filena
 		Copyright:   spotifyCopyright,
 		Publisher:   spotifyPublisher,
 		Description: "https://github.com/afkarxyz/SpotiFLAC",
-		ISRC:        isrc,
-		Genre:       mbMeta.Genre,
+		ISRC:           isrc,
+		Genre:          mbMeta.Genre,
+		DownloadSource: "Qobuz",
 	}
 
 	if err := EmbedMetadata(filepath, metadata, coverPath); err != nil {

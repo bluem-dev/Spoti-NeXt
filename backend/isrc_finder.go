@@ -29,7 +29,12 @@ const (
 	spotifyBase62Alphabet   = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	spotifyTokenCacheFile   = ".isrc-finder-token.json"
 	spotifySecretsCacheFile = "spotify-secret-dict-cache.json"
-	spotifySecretsCacheTTL  = 24 * time.Hour
+	// spotifySecretsCacheTTL controls how long the TOTP secret dictionary is
+	// cached locally before a refresh is attempted. 72 hours reduces network
+	// traffic while still picking up rotations within a few days. The cache
+	// falls back to stale data on network failure, so the effective resilience
+	// window is longer than this value.
+	spotifySecretsCacheTTL  = 72 * time.Hour
 )
 
 var spotifyAnonymousTokenMu sync.Mutex
@@ -76,9 +81,9 @@ func (s *SongLinkClient) lookupSpotifyISRC(spotifyTrackID string) (string, error
 
 	cachedISRC, err := GetCachedISRC(normalizedTrackID)
 	if err != nil {
-		fmt.Printf("Warning: failed to read ISRC cache: %v\n", err)
+		fmt.Printf("[ISRC] warning: failed to read ISRC cache: %v\n", err)
 	} else if cachedISRC != "" {
-		fmt.Printf("Found ISRC in cache: %s\n", cachedISRC)
+		fmt.Printf("[ISRC] cache hit: %s\n", cachedISRC)
 		return cachedISRC, nil
 	}
 
@@ -86,12 +91,12 @@ func (s *SongLinkClient) lookupSpotifyISRC(spotifyTrackID string) (string, error
 	if useSpotFetchAPI {
 		isrc, resolvedTrackID, err := s.lookupSpotifyISRCViaSpotFetchAPI(normalizedTrackID, spotFetchAPIURL)
 		if err == nil && isrc != "" {
-			fmt.Printf("Found ISRC via SpotFetch API: %s\n", isrc)
+			fmt.Printf("[ISRC] found via SpotFetch API: %s\n", isrc)
 			cacheResolvedSpotifyTrackISRC(normalizedTrackID, resolvedTrackID, isrc)
 			return isrc, nil
 		}
 		if err != nil {
-			fmt.Printf("Warning: SpotFetch ISRC lookup failed, falling back to Spotify metadata: %v\n", err)
+			fmt.Printf("[ISRC] warning: SpotFetch lookup failed, trying Spotify metadata: %v\n", err)
 		}
 	}
 
@@ -99,7 +104,7 @@ func (s *SongLinkClient) lookupSpotifyISRC(spotifyTrackID string) (string, error
 	if metadataErr == nil {
 		isrc, extractErr := extractSpotifyTrackISRC(payload)
 		if extractErr == nil {
-			fmt.Printf("Found ISRC via Spotify metadata: %s\n", isrc)
+			fmt.Printf("[ISRC] found via Spotify metadata: %s\n", isrc)
 			cacheResolvedSpotifyTrackISRC(normalizedTrackID, "", isrc)
 			return isrc, nil
 		}
@@ -107,12 +112,12 @@ func (s *SongLinkClient) lookupSpotifyISRC(spotifyTrackID string) (string, error
 	}
 
 	if metadataErr != nil {
-		fmt.Printf("Warning: Spotify metadata ISRC lookup failed, falling back to Soundplate: %v\n", metadataErr)
+		fmt.Printf("[ISRC] warning: Spotify metadata failed, trying Soundplate: %v\n", metadataErr)
 	}
 
 	isrc, resolvedTrackID, soundplateErr := s.lookupSpotifyISRCViaSoundplate(normalizedTrackID)
 	if soundplateErr == nil && isrc != "" {
-		fmt.Printf("Found ISRC via Soundplate: %s\n", isrc)
+		fmt.Printf("[ISRC] found via Soundplate: %s\n", isrc)
 		cacheResolvedSpotifyTrackISRC(normalizedTrackID, resolvedTrackID, isrc)
 		return isrc, nil
 	}
@@ -128,11 +133,11 @@ func (s *SongLinkClient) lookupSpotifyISRC(spotifyTrackID string) (string, error
 
 func cacheResolvedSpotifyTrackISRC(trackID string, resolvedTrackID string, isrc string) {
 	if err := PutCachedISRC(trackID, isrc); err != nil {
-		fmt.Printf("Warning: failed to write ISRC cache: %v\n", err)
+		fmt.Printf("[ISRC] warning: failed to write ISRC cache: %v\n", err)
 	}
 	if resolvedTrackID != "" && resolvedTrackID != trackID {
 		if err := PutCachedISRC(resolvedTrackID, isrc); err != nil {
-			fmt.Printf("Warning: failed to write ISRC cache for resolved track ID: %v\n", err)
+			fmt.Printf("[ISRC] warning: failed to write ISRC cache for resolved ID: %v\n", err)
 		}
 	}
 }
@@ -401,7 +406,7 @@ func requestSpotifyAnonymousAccessToken(client *http.Client) (string, error) {
 	var secrets map[string][]int
 	cachedSecrets, err := loadSpotifyCachedSecrets()
 	if err != nil {
-		fmt.Printf("Warning: failed to read Spotify secrets cache: %v\n", err)
+		fmt.Printf("[TOTP] warning: failed to read secrets cache: %v\n", err)
 	}
 
 	if spotifySecretsCacheIsValid(cachedSecrets) {
@@ -409,7 +414,7 @@ func requestSpotifyAnonymousAccessToken(client *http.Client) (string, error) {
 	} else {
 		if err := requestSpotifyJSON(client, spotifyTOTPSecretsURL, nil, &secrets); err != nil {
 			if cachedSecrets != nil && len(cachedSecrets.Secrets) > 0 {
-				fmt.Printf("Warning: failed to refresh Spotify secrets cache, using stale cache: %v\n", err)
+				fmt.Printf("[TOTP] warning: failed to refresh secrets cache, using stale: %v\n", err)
 				secrets = cachedSecrets.Secrets
 			} else {
 				return "", err
@@ -420,7 +425,7 @@ func requestSpotifyAnonymousAccessToken(client *http.Client) (string, error) {
 				Secrets:       secrets,
 			}
 			if err := saveSpotifyCachedSecrets(cache); err != nil {
-				fmt.Printf("Warning: failed to write Spotify secrets cache: %v\n", err)
+				fmt.Printf("[TOTP] warning: failed to write secrets cache: %v\n", err)
 			}
 		}
 	}
@@ -477,6 +482,16 @@ func latestSpotifySecretVersion(secrets map[string][]int) (string, error) {
 	return bestVersion, nil
 }
 
+// spotifyContentTypes lists the known Spotify content path segments.
+// Any leading path segment that is not one of these is treated as a locale
+// prefix (e.g. "intl-es", "es-419", "en-GB") and skipped automatically.
+var spotifyContentTypes = map[string]bool{
+	"track":    true,
+	"album":    true,
+	"playlist": true,
+	"artist":   true,
+}
+
 func extractSpotifyTrackID(value string) (string, error) {
 	value = strings.TrimSpace(value)
 	if value == "" {
@@ -490,6 +505,12 @@ func extractSpotifyTrackID(value string) (string, error) {
 	parsed, err := url.Parse(value)
 	if err == nil && (parsed.Scheme == "http" || parsed.Scheme == "https") {
 		parts := strings.Split(strings.Trim(parsed.Path, "/"), "/")
+		// Spotify sometimes prefixes the path with a locale segment such as
+		// "intl-es", "es-419", or "en-GB". Skip it if it is not a known
+		// content type so that locale-tagged URLs resolve correctly.
+		if len(parts) >= 1 && !spotifyContentTypes[parts[0]] {
+			parts = parts[1:]
+		}
 		if len(parts) >= 2 && parts[0] == "track" {
 			return parts[1], nil
 		}
@@ -569,4 +590,64 @@ func extractSpotifyTrackISRC(payload []byte) (string, error) {
 	}
 
 	return "", fmt.Errorf("ISRC not found in Spotify track metadata")
+}
+
+// GenerateSpotifyTOTPCode returns a fresh TOTP code and its version number
+// using the dynamic secret dictionary fetched from the upstream repository.
+// It is the single authoritative TOTP source for the entire backend; both the
+// metadata pipeline (spotfetch.go) and the ISRC resolver (isrc_finder.go)
+// must use this function so that a secret rotation is handled in one place.
+//
+// The client parameter is used only when a network request is needed to
+// refresh the secrets cache; pass nil to use a default client.
+func GenerateSpotifyTOTPCode(client *http.Client) (code string, version int, err error) {
+	if client == nil {
+		client = &http.Client{Timeout: 15 * time.Second}
+	}
+
+	var serverTime spotifyServerTimeResponse
+	if err = requestSpotifyJSON(client, spotifyServerTimeURL, nil, &serverTime); err != nil {
+		return "", 0, fmt.Errorf("failed to fetch Spotify server time: %w", err)
+	}
+
+	var secrets map[string][]int
+	cachedSecrets, cacheErr := loadSpotifyCachedSecrets()
+	if cacheErr != nil {
+		fmt.Printf("[TOTP] warning: failed to read secrets cache: %v\n", cacheErr)
+	}
+
+	if spotifySecretsCacheIsValid(cachedSecrets) {
+		secrets = cachedSecrets.Secrets
+	} else {
+		if fetchErr := requestSpotifyJSON(client, spotifyTOTPSecretsURL, nil, &secrets); fetchErr != nil {
+			if cachedSecrets != nil && len(cachedSecrets.Secrets) > 0 {
+				fmt.Printf("[TOTP] warning: failed to refresh secrets cache, using stale: %v\n", fetchErr)
+				secrets = cachedSecrets.Secrets
+			} else {
+				return "", 0, fmt.Errorf("failed to fetch Spotify TOTP secrets: %w", fetchErr)
+			}
+		} else {
+			cache := &spotifySecretsCache{
+				FetchedAtUnix: time.Now().Unix(),
+				Secrets:       secrets,
+			}
+			if saveErr := saveSpotifyCachedSecrets(cache); saveErr != nil {
+				fmt.Printf("[TOTP] warning: failed to write secrets cache: %v\n", saveErr)
+			}
+		}
+	}
+
+	versionStr, err := latestSpotifySecretVersion(secrets)
+	if err != nil {
+		return "", 0, err
+	}
+
+	versionInt, err := strconv.Atoi(versionStr)
+	if err != nil {
+		return "", 0, fmt.Errorf("invalid TOTP secret version %q: %w", versionStr, err)
+	}
+
+	secret := deriveSpotifyTOTPSecret(secrets[versionStr])
+	code = generateSpotifyTOTP(secret, serverTime.ServerTime*1000)
+	return code, versionInt, nil
 }

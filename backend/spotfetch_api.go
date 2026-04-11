@@ -49,6 +49,7 @@ func GetSpotifyDataWithAPI(ctx context.Context, spotifyURL string, useAPI bool, 
 		return nil, fmt.Errorf("invalid Spotify URL: %s", spotifyURL)
 	}
 
+	// Artists are not supported by the SpotFetch API — fall back to direct scraping.
 	if spotifyType == "artist" {
 		return GetFilteredSpotifyData(ctx, spotifyURL, batch, delay, separator, callback)
 	}
