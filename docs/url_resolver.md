@@ -1,12 +1,10 @@
-# Resolver de Links — Documentación técnica
+# Resolver de enlaces
 
 ## Estado
+> Implementado. Funcional. Algunos gaps pendientes (ver BACKLOG).
+___
 
-Implementado. Funcional. Algunos gaps pendientes (ver BACKLOG).
-
----
-
-## Qué es
+## ¿Qué es?
 
 El resolver es el sistema que, dado un link de Spotify, encuentra las URLs equivalentes en Tidal, Qobuz, Amazon Music y Deezer para poder descargar el audio.
 
