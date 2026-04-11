@@ -6,7 +6,7 @@
 
 ***
 
-## CARACTERÍSTICAS
+## Características
 
 | Función | Estado |
 |------|--------|
@@ -18,7 +18,7 @@
 | Desc. simultáneas | 🟥 Pendiente |
 
 
-# INFORMACIÓN DE CORRECCIONES
+# Información de correcciones
 
 - Resolución de enlaces:<br>
 → Solución a errores de obtención de datos y cruce fallidos.<br>
@@ -28,24 +28,15 @@
 - Loggin plano: ahora usa log.Print de stdlib.
 - ...
 
-# INFORMACIÓN DE CARACTERISTICAS
+# Información de características nuevas
 
-- Dolby Atmos:<br>
-→ Requiere cuenta TIDAL vinculada.<br>
-Cuando está disponible, accede al stream E-AC3 en formato M4A.<br>
-Si el track/cuenta no tienen acceso a D. Atmos, se descarga en HI_RES_LOSSLESS como alternativa.<br>
-La disponibilidad depende del plan de suscripción y del catálogo regional.<br>
-Spoti NeXt no puede garantizar Atmos en todos los casos.<br>
+- Limitaciones de [Dolby Atmos, TIDAL](ATMOS.md)<br>
 
-# FUTURAS IMPLEMENTACIONES
+# Futuras implementaciones y correcciones
 
 - Selector de formatos: FLAC, M4A, OPUS, MP3.<br>
 → Modalidades: manual y automática (definida por calidad adecuada).<br>
 - División de álbumes: DISC 1 X DISC 2 x DISC 3, etc. Órden original.
-- ...
-
-# FUTURAS CORRECCIONES
-
 - Conservar portadas y metadata en todos los formatos con compatibilidad: ID3Tag.<br>
 - Expansión de directorios: distinción EPs, Remixes, Compilations, Playlists, Deluxe, Editions...<br>
 - ...
