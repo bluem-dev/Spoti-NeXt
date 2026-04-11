@@ -10,33 +10,27 @@
 
 | Función | Estado |
 |------|--------|
-| Fuente única (DD) | 🟩 Implementado |
-| Resolución de enlaces | 🟩 Corregido y extendido |
-| Metadata: fuente (DD) | 🟩 Implementado |
-| Descarga: Atmos (TIDAL) | 🟩 Implementado |
-| Idiomas: inglés, español | 🟩 Implementado |
-| Desc. simultáneas | 🟥 Pendiente |
+| Fuente única (DD) | 🟩 |
+| Resolución de enlaces | 🟩 |
+| Calidades | 🟩 |
+| TIDAL: Account Debug | 🟩  |
+| TIDAL: Atmos | 🟩 |
+| TIDAL: Account Debug | 🟩  |
+| Idiomas: inglés, español | 🟩 |
+| Desc. simultáneas | 🟥 |
 
+> 🟩: Implementado.<br>
+> 🟥: Pendiente.<br>
 
-# Información de correcciones
+# Información técnica y detallada
 
-- Resolución de enlaces:<br>
-→ Solución a errores de obtención de datos y cruce fallidos.<br>
-→ Extensión de URL y regiones: los enlaces se resuelven sin importar región.<br>
-→ Relacionados a "SpotiFetch API" & "Fetch Data".<br>
-- ISRC/TTL: corrección de caché, tiempo y duplicado.
-- Loggin plano: ahora usa log.Print de stdlib.
-- ...
-
-# Implementaciones y características
-
-- [TIDAL: Dolby Atmos](docs/tidal_atmos.md)<br>
-- [TIDAL: Debug Account](docs/tidal_account_debug.md)<br>
-- [TIDAL: Account](docs/tidal_account_atmos.md)<br>
-- [Modo directo](docs/next_direct_mode.md)<br>
-- [Calidad de formato](docs/next_quality_format.md)<br>
-- [Metadata](docs/next_metadata.md)<br>
-- [Resolución de enlaces](docs/url_resolver.md)<br>
+→  [TIDAL: Dolby Atmos](docs/tidal_atmos.md)<br>
+→  [TIDAL: Debug Account](docs/tidal_account_debug.md)<br>
+→  [TIDAL: Account](docs/tidal_account_atmos.md)<br>
+→  [Modo directo](docs/next_direct_mode.md)<br>
+→  [Calidad de formato](docs/next_quality_format.md)<br>
+→  [Metadata](docs/next_metadata.md)<br>
+→  [Resolución de enlaces](docs/url_resolver.md)<br>
 
 # Futuras implementaciones y correcciones
 
