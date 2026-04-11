@@ -43,10 +43,12 @@
 
 ## DECLARACIÓN
 
-This project is for **educational and private use only**. The developer does not condone or encourage copyright infringement.
+El proyecto está enfocado con própositos educacionales, y de uso privado. Sin ánimos de lucro. Su autor/creador no fomenta la infracción sobre derechos de autor.
 
-**SpotiFLAC** and **Spoti NeXt** is a third-party tool and is not affiliated with, endorsed by, or connected to Spotify, Tidal, Qobuz, Amazon Music or any other streaming 
-service.
+**Spoti NeXt** (SpotiFLAC) es una herramienta de terceros y no está afiliada, respaldada ni vinculada a Spotify, Tidal, Qobuz, Amazon Music ni a ningún otro 
+servicio de streaming.
+
+***
 
 ## CRÉDITOS DE APIs & APLICACIÓN
 
