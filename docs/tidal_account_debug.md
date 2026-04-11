@@ -1,18 +1,17 @@
-# Panel de Debug — Documentación técnica
+# Panel de Debug
 
 ## Estado
+> Implementado. Funcional.
 
-Implementado. Funcional.
+___
 
----
-
-## Qué es
+## ¿Qué es?
 
 El panel de debug es una vista interna de Spoti NeXt que muestra los logs del proceso de descarga en tiempo real. Está orientado a diagnosticar errores, verificar el comportamiento de los resolvers y confirmar el resultado de operaciones de backend que de otro modo serían invisibles para el usuario.
 
 ---
 
-## Dónde está
+## ¿Dónde está?
 
 **Sidebar → Debug** (ícono de terminal)
 
@@ -41,7 +40,7 @@ Los niveles de log tienen colores:
 | `error` | Rojo |
 | `debug` | Gris |
 
-### 2 — Logs del backend (DebugLog / eventos Wails)
+### 2 — Logs del backend (DebugLog / eventos)
 
 Emitidos por el backend Go y reenviados al frontend vía eventos Wails (`debug:atmos`). Actualmente incluyen los logs del flujo Atmos de Tidal:
 
