@@ -13,7 +13,7 @@
 | Fuente única (DD) | 🟩 Implementado |
 | Resolución de enlaces | 🟩 Corregido y extendido |
 | Metadata: fuente (DD) | 🟩 Implementado |
-| Descarga: Atmos (TIDAL) | 🟧 En pruebas de desarrollo |
+| Descarga: Atmos (TIDAL) | 🟥  En pruebas... |
 | Idiomas: inglés, español | 🟩 Implementado |
 | Desc. simultáneas | 🟥 Pendiente |
 
