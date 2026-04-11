@@ -1,4 +1,4 @@
-# Dolby Atmos — Documentación técnica
+# Dolby Atmos
 
 ## Estado
 
