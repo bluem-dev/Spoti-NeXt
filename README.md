@@ -32,6 +32,17 @@
 →  [Metadata](docs/next_metadata.md)<br>
 →  [Resolución de enlaces](docs/url_resolver.md)<br>
 
+- ¿Por qué TIDAL requiere cuenta?<br>
+→  TIDAL no requiere cuenta para descargas estándar; entonces, ¿por qué se incluyó en "NeXt"?<br>
+Tal como se explica en los documentos, es una función 'avanzada y de prueba', esto permite descargas<br>
+en Dolby Atmos.<br>
+"SpotiFetch API" por sí mismo, y por el momento no permite acceder a ése formato.<br>
+Se usó el método disponible; tokens y cuenta de la plataforma.<br>
+
+- El usuario afkarxyz sigue trabajando en sus versiones y mejorando el objetivo: sin cuentas requeridas. Queda esperar que también 
+extenda el método de Tidal para descargar en Dolby Atmos (sin precisar de una cuenta).
+
+
 # Futuras implementaciones y correcciones
 
 - Selector de formatos: FLAC, M4A, OPUS, MP3.<br>
